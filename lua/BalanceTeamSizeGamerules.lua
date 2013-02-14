@@ -7,7 +7,7 @@
 //
 // =====================================================
 
-Script.Load("lua/NS2Gamerules.lua")
+local strformat = string.format
 
 if (Server) then
     function NS2Gamerules:GetCanJoinTeamNumber(teamNumber)
@@ -83,7 +83,7 @@ if (Server) then
                         
                         SendTeamMessage(self.team1, kTeamMessageTypes.TeamsUnbalanced)
                         SendTeamMessage(self.team2, kTeamMessageTypes.TeamsUnbalanced)
-                        //Print("Auto-team balance enabled")
+                        Print("Auto-team balance enabled")
                         
                         TEST_EVENT("Auto-team balance enabled")
                         
@@ -109,10 +109,44 @@ if (Server) then
             self.autoTeamBalanceEnabled = false
             SendTeamMessage(self.team1, kTeamMessageTypes.TeamsBalanced)
             SendTeamMessage(self.team2, kTeamMessageTypes.TeamsBalanced)
-            //Print("Auto-team balance disabled")
+            Print("Auto-team balance disabled")
             
             TEST_EVENT("Auto-team balance disabled")
             
         end        
+    end
+    
+    // Welcome message!    
+    function NS2Gamerules:OnClientConnect(client)     
+        Gamerules.OnClientConnect(self, client)        
+        local player = client:GetControllingPlayer()
+        
+        player:SendMessage(Server.GetName(), "This server is running balanced team sizes.")
+        
+        if (kBalanceTeamSizeTeamAdvantage == 1) then
+            player:SendMessage(Server.GetName(), "At the moment, the marine team has an advantage.")
+            
+            player:SendMessage(Server.GetName(), 
+                strformat("The marine team will have %d more players.", kBalanceTeamSizeMarineTeamSizeAdvantage))
+        else            
+            player:SendMessage(Server.GetName(), "At the moment, the alien team has an advantage.")
+            
+            player:SendMessage(Server.GetName(), 
+                strformat("The marine team will have %d more players.", kBalanceTeamSizeAlienTeamSizeAdvantage))    
+        end    
+    end    
+    
+    function Player:SendMessage(chatName, chatMessage, teamMessage, locationId)
+        assert(type(chatMessage) == "string", "chatMessage needs to be a string")
+        assert(type(chatName) == "string", "chatName needs to be a string")
+        
+        teamMessage = teamMessage or true
+        assert(type(teamMessage) == "boolean", "teamMessage needs to be a boolean")
+        local teamNumber = teamMessage and self:GetTeamNumber() or kTeamReadyRoom   
+        
+        locationId = locationId or -1
+        assert(type(locationId) == "number", "locationId needs to be a number")
+                     
+        Server.SendNetworkMessage(self, "Chat", BuildChatMessage(true, chatName, locationId, teamNumber, kNeutralTeamType, chatMessage), true)
     end
 end
