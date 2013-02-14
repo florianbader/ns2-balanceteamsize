@@ -1,2 +1,2 @@
-ns2-balanceteamsize
+Natural Selection 2: Balance Team Sizes
 ===================
